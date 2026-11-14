@@ -52,7 +52,7 @@ flask --app app run --debug        # open http://127.0.0.1:5000
 The **first account that signs up** automatically becomes an admin, so you can also skip
 `create-admin` and just sign up first. Data is stored in `instance/blog.db`.
 
-Run the tests with `pip install pytest && pytest`.
+Run the tests with `pip install pytest && pytest` (set `TEST_DATABASE_URL` to test against PostgreSQL).
 
 > Delete the example posts and the "Demo Member" account (Admin → Users) before launch.
 
@@ -68,16 +68,24 @@ Set these environment variables in any host:
 
 The start command is `gunicorn app:app`.
 
-### Option A: Render (recommended, uses PostgreSQL)
-1. Push this folder to a GitHub repository.
-2. On [render.com](https://render.com): **New → Blueprint**, pick the repo. `render.yaml`
-   creates the web service and a PostgreSQL database and generates `SECRET_KEY`.
-3. Open the site and sign up first (you become admin), or run
-   `flask --app app create-admin` from the Render shell.
-4. Add a custom domain in Render if the lab has one.
+### Option A: Vercel (recommended, free, no credit card)
+Vercel runs the app; a free **Neon** Postgres database stores the posts.
 
-Check Render's current pricing: free databases have historically had time limits, so use
-a paid starter database for a site you want to keep.
+1. Sign in at [vercel.com](https://vercel.com) with GitHub (choose the free **Hobby** plan).
+2. **Add New → Project**, import the `uciaiblog` repository. The Flask preset is picked up
+   from `vercel.json`. Click **Deploy**. The first deploy shows an error page until steps 3–4
+   are done; that is expected.
+3. In the project, open **Storage → Create Database → Neon (Serverless Postgres)**, pick the
+   free plan and connect it to the project. This adds `DATABASE_URL` automatically.
+4. **Settings → Environment Variables**: add `SECRET_KEY` with a long random value
+   (e.g. from `python -c "import secrets; print(secrets.token_hex(32))"`).
+5. **Deployments → ⋯ → Redeploy**. Open the site and sign up: the first account becomes admin.
+
+Every push to `main` redeploys automatically. Add a custom domain under Settings → Domains.
+
+### Option A2: Render (uses `render.yaml`)
+Render may ask for a card. **New → Blueprint**, pick the repo; it creates the web service
+and a PostgreSQL database and generates `SECRET_KEY`.
 
 ### Option B: PythonAnywhere (simple, keeps SQLite)
 1. Upload the folder, create a virtualenv and `pip install -r requirements.txt`.
@@ -88,7 +96,7 @@ a paid starter database for a site you want to keep.
 ### Option C: University / any Linux server
 Run `gunicorn -w 3 -b 127.0.0.1:8000 app:app` behind nginx with HTTPS, with the variables above.
 
-> Hosts with temporary disks (Render, Railway, Heroku-style) **must** use PostgreSQL via
+> Hosts with temporary disks (Vercel, Render, Railway, Heroku-style) **must** use PostgreSQL via
 > `DATABASE_URL`, otherwise posts are lost on every redeploy.
 
 ## Project layout

@@ -274,8 +274,17 @@ def paginate(query, per_page=9):
 # --------------------------------------------------------------------------
 def create_app(test_config=None):
     app = Flask(__name__)
-    db_url = os.environ.get("DATABASE_URL",
-                            "sqlite:///" + os.path.join(BASE_DIR, "instance", "blog.db"))
+    on_vercel = bool(os.environ.get("VERCEL"))
+    db_url = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
+    if on_vercel and not test_config:
+        # Vercel has no persistent disk, so a real database and a fixed key are required.
+        if not db_url:
+            raise RuntimeError("DATABASE_URL is not set. Add a Neon Postgres database in "
+                               "Vercel (Storage tab) and redeploy.")
+        if not os.environ.get("SECRET_KEY"):
+            raise RuntimeError("SECRET_KEY is not set. Add it under Vercel > Settings > "
+                               "Environment Variables and redeploy.")
+    db_url = db_url or "sqlite:///" + os.path.join(BASE_DIR, "instance", "blog.db")
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql+psycopg://", 1)
     elif db_url.startswith("postgresql://"):
@@ -286,13 +295,14 @@ def create_app(test_config=None):
         SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True},
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
-        SESSION_COOKIE_SECURE=os.environ.get("FLASK_ENV") == "production",
-        REMEMBER_COOKIE_SECURE=os.environ.get("FLASK_ENV") == "production",
+        SESSION_COOKIE_SECURE=on_vercel or os.environ.get("FLASK_ENV") == "production",
+        REMEMBER_COOKIE_SECURE=on_vercel or os.environ.get("FLASK_ENV") == "production",
         MAX_CONTENT_LENGTH=2 * 1024 * 1024,
     )
     if test_config:
         app.config.update(test_config)
-    os.makedirs(os.path.join(BASE_DIR, "instance"), exist_ok=True)
+    if db_url.startswith("sqlite"):
+        os.makedirs(os.path.join(BASE_DIR, "instance"), exist_ok=True)
 
     db.init_app(app)
     csrf.init_app(app)

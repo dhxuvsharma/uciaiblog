@@ -4,13 +4,16 @@ import pytest
 @pytest.fixture()
 def client():
     fd, path = tempfile.mkstemp(suffix=".db")
-    os.environ["DATABASE_URL"] = "sqlite:///" + path
+    # Set TEST_DATABASE_URL to run the suite against PostgreSQL instead of SQLite.
+    os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL") or "sqlite:///" + path
     import importlib, app as appmod
     importlib.reload(appmod)
     a = appmod.create_app({"TESTING": True, "WTF_CSRF_ENABLED": False})
     with a.test_client() as c:
         c.appmod = appmod; c.flask_app = a
         yield c
+        with a.app_context():
+            appmod.db.drop_all()
     os.close(fd); os.unlink(path)
 
 def signup(c, name, email, pw="password123"):
