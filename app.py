@@ -284,6 +284,16 @@ def find_database_url():
 
 
 def create_app(test_config=None):
+    """Build the app. If it can't start (e.g. a missing setting), serve a setup page."""
+    try:
+        return build_app(test_config)
+    except Exception as e:  # noqa: BLE001
+        if test_config:
+            raise
+        return setup_error_app(e)
+
+
+def build_app(test_config=None):
     app = Flask(__name__)
     on_vercel = bool(os.environ.get("VERCEL"))
     db_url = find_database_url()
@@ -862,10 +872,7 @@ def setup_error_app(err):
     return fallback
 
 
-try:
-    app = create_app()
-except Exception as e:  # noqa: BLE001
-    app = setup_error_app(e)
+app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True)
