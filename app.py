@@ -272,10 +272,21 @@ def paginate(query, per_page=9):
 # --------------------------------------------------------------------------
 # App factory
 # --------------------------------------------------------------------------
+def find_database_url():
+    """DATABASE_URL, or what Vercel's Neon integration sets (possibly with a custom prefix)."""
+    for key in ("DATABASE_URL", "POSTGRES_URL"):
+        if os.environ.get(key):
+            return os.environ[key]
+    for key, val in sorted(os.environ.items()):
+        if val and (key.endswith("_DATABASE_URL") or key.endswith("_POSTGRES_URL")):
+            return val
+    return None
+
+
 def create_app(test_config=None):
     app = Flask(__name__)
     on_vercel = bool(os.environ.get("VERCEL"))
-    db_url = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
+    db_url = find_database_url()
     if on_vercel and not test_config:
         # Vercel has no persistent disk, so a real database and a fixed key are required.
         if not db_url:
@@ -828,7 +839,33 @@ def register_cli(app):
         click.echo("Example content added.")
 
 
-app = create_app()
+def setup_error_app(err):
+    """Shown instead of a blank 500 when the site can't start (usually a missing setting)."""
+    import traceback
+    from markupsafe import escape
+    traceback.print_exc()
+    msg = re.sub(r"://[^\s@/]*@", "://***@", str(err))  # never show DB passwords
+    fallback = Flask(__name__)
+
+    @fallback.route("/", defaults={"path": ""})
+    @fallback.route("/<path:path>")
+    def setup_needed(path):
+        checks = [("DATABASE_URL", bool(find_database_url())),
+                  ("SECRET_KEY", bool(os.environ.get("SECRET_KEY")))]
+        rows = "".join(f"<li>{'✅' if ok else '❌ missing:'} <code>{k}</code></li>" for k, ok in checks)
+        return (f"""<!doctype html><meta name=viewport content="width=device-width,initial-scale=1">
+<title>Setup needed</title><body style="font-family:system-ui;max-width:640px;margin:4rem auto;padding:0 16px;line-height:1.6">
+<h1>The blog isn't fully set up yet</h1><p>Environment variables:</p><ul>{rows}</ul>
+<p><b>Error:</b> <code>{escape(type(err).__name__)}: {escape(msg)}</code></p>
+<p>On Vercel: connect a Neon database under <b>Storage</b>, add <code>SECRET_KEY</code> under
+<b>Settings → Environment Variables</b> (tick Production), then <b>Redeploy</b>.</p></body>""", 503)
+    return fallback
+
+
+try:
+    app = create_app()
+except Exception as e:  # noqa: BLE001
+    app = setup_error_app(e)
 
 if __name__ == "__main__":
     app.run(debug=True)
