@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Sign up' if mode=='signup' else 'Log in' }} · {{ site_name }}{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-side">
+      <h2>{{ 'Join the UC Irvine AI Lab community' if mode=='signup' else 'Welcome back' }}</h2>
+      <p>Post papers, follow AI news and keep up with what's happening in the lab.</p>
+      <ul class="ticks"><li>Share and discuss papers</li><li>Post news and lab updates</li><li>Comment and like posts</li></ul>
+    </div>
+    <div class="auth-main">
+      {% if mode == 'signup' %}
+        <h1>Create your account</h1>
+        {% if not signups_open %}
+          <div class="notice notice-hidden">New sign-ups are currently closed. Please contact the lab admin.</div>
+        {% else %}
+        <form method="post" class="form">
+          {% include "partials/csrf.html" %}
+          <div class="field"><label for="name">Full name</label><input id="name" name="name" value="{{ form.name }}" required autocomplete="name"></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" value="{{ form.email }}" required autocomplete="email" placeholder="{{ 'you@' ~ domain if domain else 'you@uci.edu' }}">
+            {% if domain %}<small class="muted">Only @{{ domain }} addresses can sign up.</small>{% endif %}</div>
+          <div class="field"><label for="affiliation">Affiliation <span class="muted">(optional)</span></label><input id="affiliation" name="affiliation" value="{{ form.affiliation }}" placeholder="e.g. PhD student, Computer Science"></div>
+          <div class="row-2">
+            <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" minlength="8" required autocomplete="new-password"></div>
+            <div class="field"><label for="confirm">Confirm password</label><input id="confirm" name="confirm" type="password" minlength="8" required autocomplete="new-password"></div>
+          </div>
+          <button class="btn btn-primary btn-block">Create account</button>
+        </form>
+        {% endif %}
+        <p class="muted center">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+      {% else %}
+        <h1>Log in</h1>
+        <form method="post" class="form">
+          {% include "partials/csrf.html" %}
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" value="{{ form.email }}" required autocomplete="email" autofocus></div>
+          <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" required autocomplete="current-password"></div>
+          <label class="check"><input type="checkbox" name="remember" value="1"> Keep me logged in</label>
+          <button class="btn btn-primary btn-block">Log in</button>
+        </form>
+        <p class="muted center">New here? <a href="{{ url_for('signup') }}">Create an account</a></p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+<article class="card">
+  <a class="card-link" href="{{ url_for('post_detail', slug=p.slug) }}" aria-label="{{ p.title }}"></a>
+  <div class="card-top">
+    <span class="pill pill-{{ p.category }}">{{ p.category_label }}</span>
+    {% if p.status != 'published' %}<span class="pill pill-status-{{ p.status }}">{{ p.status|title }}</span>{% endif %}
+    <span class="muted small">{{ p.reading_minutes }} min read</span>
+  </div>
+  <h3 class="card-title">{{ p.title }}</h3>
+  {% if p.authors_line %}<p class="card-authors">{{ p.authors_line }}</p>{% endif %}
+  <p class="card-excerpt">{{ p.excerpt }}</p>
+  <div class="card-foot">
+    <span class="byline"><span class="avatar avatar-xs" style="--h: {{ p.author.avatar_hue }}">{{ p.author.initials }}</span>{{ p.author.name }} &middot; {{ p.created_at|date }}</span>
+    <span class="card-stats">
+      <span title="Likes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>{{ p.like_count }}</span>
+      <span title="Comments"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>{{ p.comment_count }}</span>
+    </span>
+  </div>
+</article>

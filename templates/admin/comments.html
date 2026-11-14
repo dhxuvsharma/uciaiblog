@@ -1,0 +1,23 @@
+{% extends "admin/layout.html" %}
+{% block admin %}
+<div class="admin-head"><h1>Comments</h1><p class="muted">Hide comments to remove them from public view, or delete them permanently.</p></div>
+<div class="panel table-wrap">
+  <table class="table">
+    <thead><tr><th>Comment</th><th>On post</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for c in pagination.items %}
+      <tr>
+        <td class="wide"><strong>{{ c.author.name }}</strong> <small class="muted">{{ c.created_at|ago }}</small><br>{{ c.body|truncate(160) }}</td>
+        <td><a href="{{ url_for('post_detail', slug=c.post.slug) }}#comments">{{ c.post.title|truncate(50) }}</a></td>
+        <td><span class="pill pill-status-{{ 'hidden' if c.is_hidden else 'published' }}">{{ 'hidden' if c.is_hidden else 'visible' }}</span></td>
+        <td><div class="row-actions">
+          <form method="post" action="{{ url_for('admin_comment_toggle', cid=c.id) }}" class="inline">{% include "partials/csrf.html" %}<button class="btn btn-xs btn-ghost">{{ 'Restore' if c.is_hidden else 'Hide' }}</button></form>
+          <form method="post" action="{{ url_for('delete_comment', cid=c.id) }}" class="inline" data-confirm="Delete this comment?">{% include "partials/csrf.html" %}<input type="hidden" name="next" value="{{ request.full_path }}"><button class="btn btn-xs btn-ghost danger">Delete</button></form>
+        </div></td>
+      </tr>
+    {% else %}<tr><td colspan="4" class="muted center">No comments yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/pager.html" %}
+{% endblock %}

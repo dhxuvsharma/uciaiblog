@@ -1,0 +1,41 @@
+{% extends "admin/layout.html" %}
+{% block admin %}
+<div class="admin-head"><h1>Users</h1><p class="muted"><strong>Members</strong> can post and comment. <strong>Editors</strong> can also approve, hide and feature posts and moderate comments. <strong>Admins</strong> can do everything, including managing users and site settings.</p></div>
+<div class="toolbar">
+  <div class="chips">
+    {% for r, label in [('', 'All'), ('admin', 'Admins'), ('editor', 'Editors'), ('member', 'Members'), ('banned', 'Suspended')] %}
+      <a class="chip {{ 'active' if role==r }}" href="{{ url_for('admin_users', role=r or None, q=q or None) }}">{{ label }}</a>
+    {% endfor %}
+  </div>
+  <form class="search" method="get">{% if role %}<input type="hidden" name="role" value="{{ role }}">{% endif %}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input type="search" name="q" value="{{ q }}" placeholder="Search name or email…"></form>
+</div>
+<div class="panel table-wrap">
+  <table class="table">
+    <thead><tr><th>User</th><th>Joined</th><th>Posts</th><th>Role</th><th></th></tr></thead>
+    <tbody>
+    {% for u in pagination.items %}
+      <tr class="{{ 'row-muted' if u.is_banned }}">
+        <td><div class="user-cell"><span class="avatar avatar-sm" style="--h: {{ u.avatar_hue }}">{{ u.initials }}</span><span><a href="{{ url_for('profile', uid=u.id) }}"><strong>{{ u.name }}</strong></a>{% if u.is_banned %} <span class="pill pill-status-hidden">suspended</span>{% endif %}<br><small class="muted">{{ u.email }}</small></span></div></td>
+        <td class="muted small nowrap">{{ u.created_at|date }}</td>
+        <td>{{ u.posts.count() }}</td>
+        <td>
+          {% if u.id == current_user.id %}<span class="role role-{{ u.role }}">{{ u.role }}</span> <small class="muted">(you)</small>
+          {% else %}
+          <form method="post" action="{{ url_for('admin_user_action', uid=u.id, action='role') }}" class="inline">{% include "partials/csrf.html" %}<input type="hidden" name="next" value="{{ request.full_path }}">
+            <select name="role" class="select-sm" data-autosubmit>{% for r in ROLES %}<option value="{{ r }}" {{ 'selected' if u.role==r }}>{{ r|title }}</option>{% endfor %}</select>
+          </form>
+          {% endif %}
+        </td>
+        <td>{% if u.id != current_user.id %}<div class="row-actions">
+          <form method="post" action="{{ url_for('admin_user_action', uid=u.id, action='ban') }}" class="inline">{% include "partials/csrf.html" %}<input type="hidden" name="next" value="{{ request.full_path }}"><button class="btn btn-xs btn-ghost">{{ 'Reinstate' if u.is_banned else 'Suspend' }}</button></form>
+          <form method="post" action="{{ url_for('admin_user_action', uid=u.id, action='delete') }}" class="inline" data-confirm="Delete {{ u.name }} and all of their posts and comments? This can't be undone.">{% include "partials/csrf.html" %}<input type="hidden" name="next" value="{{ request.full_path }}"><button class="btn btn-xs btn-ghost danger">Delete</button></form>
+        </div>{% endif %}</td>
+      </tr>
+    {% else %}<tr><td colspan="5" class="muted center">No users match.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/pager.html" %}
+{% endblock %}

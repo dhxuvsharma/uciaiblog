@@ -1,0 +1,39 @@
+{% extends "admin/layout.html" %}
+{% block admin %}
+<div class="admin-head"><h1>Dashboard</h1><p class="muted">Welcome back, {{ current_user.name.split()[0] }}. Here's what's happening on the blog.</p></div>
+<div class="stat-grid">
+  <div class="stat"><span>Published posts</span><strong>{{ counts.posts }}</strong></div>
+  <a class="stat {{ 'stat-alert' if counts.pending }}" href="{{ url_for('admin_posts', status='pending') }}"><span>Awaiting approval</span><strong>{{ counts.pending }}</strong></a>
+  <div class="stat"><span>Members</span><strong>{{ counts.users }}</strong></div>
+  <div class="stat"><span>Comments</span><strong>{{ counts.comments }}</strong></div>
+  <div class="stat"><span>Likes</span><strong>{{ counts.likes }}</strong></div>
+  <div class="stat"><span>Hidden posts</span><strong>{{ counts.hidden }}</strong></div>
+</div>
+
+<div class="admin-cols">
+  <div class="panel">
+    <div class="panel-head"><h3>Recent posts</h3><a href="{{ url_for('admin_posts') }}">View all</a></div>
+    <table class="table">
+      <tbody>
+      {% for p in recent_posts %}
+        <tr><td><a href="{{ url_for('post_detail', slug=p.slug) }}"><strong>{{ p.title }}</strong></a><br><small class="muted">{{ p.author.name }} &middot; {{ p.created_at|ago }}</small></td>
+          <td><span class="pill pill-status-{{ p.status }}">{{ p.status }}</span></td></tr>
+      {% else %}<tr><td class="muted">No posts yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>Posts by category</h3></div>
+    {% set total = by_cat.values()|sum or 1 %}
+    <div class="bars">
+      {% for key, label in CATEGORIES.items() %}
+      <div class="bar-row"><span>{{ label }}</span><div class="bar"><i class="pill-{{ key }}" style="width: {{ (100 * by_cat.get(key, 0) / total)|round(1) }}%"></i></div><b>{{ by_cat.get(key, 0) }}</b></div>
+      {% endfor %}
+    </div>
+    <div class="panel-head" style="margin-top:1.5rem"><h3>Newest members</h3>{% if current_user.is_admin %}<a href="{{ url_for('admin_users') }}">Manage</a>{% endif %}</div>
+    <ul class="people">
+      {% for u in recent_users %}<li><span class="avatar avatar-sm" style="--h: {{ u.avatar_hue }}">{{ u.initials }}</span><span><strong>{{ u.name }}</strong><small class="muted">{{ u.created_at|ago }}</small></span><span class="role role-{{ u.role }}">{{ u.role }}</span></li>{% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

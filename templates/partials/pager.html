@@ -1,0 +1,7 @@
+{% if pagination.pages > 1 %}
+<nav class="pager">
+  {% if pagination.has_prev %}<a class="btn btn-ghost" href="{{ page_url(pagination.prev_num) }}">&larr; Newer</a>{% endif %}
+  <span class="muted">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}<a class="btn btn-ghost" href="{{ page_url(pagination.next_num) }}">Older &rarr;</a>{% endif %}
+</nav>
+{% endif %}

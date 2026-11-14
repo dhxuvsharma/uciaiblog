@@ -1,0 +1,20 @@
+{% extends "admin/layout.html" %}
+{% block admin %}
+<div class="admin-head"><h1>Site settings</h1></div>
+<form method="post" class="form">
+  {% include "partials/csrf.html" %}
+  <div class="panel">
+    <h3>General</h3>
+    <div class="field"><label for="site_name">Site name</label><input id="site_name" name="site_name" value="{{ settings.site_name }}"></div>
+    <div class="field"><label for="tagline">Tagline</label><input id="tagline" name="tagline" value="{{ settings.tagline }}"></div>
+    <div class="field"><label for="announcement">Announcement banner <span class="muted">(shown at the top of every page; leave blank to hide)</span></label><input id="announcement" name="announcement" value="{{ settings.announcement }}" maxlength="300" placeholder="e.g. Reading group moves to Thursdays this quarter"></div>
+  </div>
+  <div class="panel">
+    <h3>Membership &amp; moderation</h3>
+    <label class="switch"><input type="checkbox" name="signups_open" value="1" {{ 'checked' if settings.signups_open=='1' }}><span class="slider"></span><span><strong>Allow new sign-ups</strong><small>Turn off to stop anyone new from creating an account.</small></span></label>
+    <label class="switch"><input type="checkbox" name="require_approval" value="1" {{ 'checked' if settings.require_approval=='1' }}><span class="slider"></span><span><strong>Require approval for member posts</strong><small>Posts by members wait in the approval queue until an editor or admin publishes them. Editors' and admins' posts always go live immediately.</small></span></label>
+    <div class="field"><label for="allowed_domain">Restrict sign-ups to an email domain <span class="muted">(optional)</span></label><input id="allowed_domain" name="allowed_domain" value="{{ settings.allowed_domain }}" placeholder="uci.edu"><small class="muted">Leave blank to let anyone sign up. Set to <code>uci.edu</code> to allow only UCI addresses (subdomains like ics.uci.edu also work).</small></div>
+  </div>
+  <div class="form-actions"><button class="btn btn-primary">Save settings</button></div>
+</form>
+{% endblock %}

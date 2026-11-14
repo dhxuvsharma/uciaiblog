@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ user.name }} · {{ site_name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="profile-head">
+    <span class="avatar avatar-xl" style="--h: {{ user.avatar_hue }}">{{ user.initials }}</span>
+    <div>
+      <h1>{{ user.name }} {% if user.role != 'member' %}<span class="role role-{{ user.role }}">{{ user.role }}</span>{% endif %}</h1>
+      {% if user.affiliation %}<p class="muted">{{ user.affiliation }}</p>{% endif %}
+      {% if user.bio %}<p>{{ user.bio }}</p>{% endif %}
+      <p class="muted small">Member since {{ user.created_at|date('%B %Y') }} &middot; {{ pagination.total }} post{{ '' if pagination.total == 1 else 's' }}</p>
+    </div>
+    {% if current_user.is_authenticated and current_user.id == user.id %}<a class="btn btn-ghost" href="{{ url_for('account') }}">Edit profile</a>{% endif %}
+  </div>
+  {% if pagination.items %}
+    <div class="grid">{% for p in pagination.items %}{% include "partials/card.html" %}{% endfor %}</div>
+    {% include "partials/pager.html" %}
+  {% else %}
+    <div class="empty"><h3>No posts yet</h3>{% if current_user.is_authenticated and current_user.id == user.id %}<a class="btn btn-primary" href="{{ url_for('new_post') }}">Write your first post</a>{% endif %}</div>
+  {% endif %}
+</div>
+{% endblock %}

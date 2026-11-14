@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ 'New post' if is_new else 'Edit post' }} · {{ site_name }}{% endblock %}
+{% block content %}
+<div class="container narrow">
+  <div class="page-head">
+    <h1>{{ 'Write a new post' if is_new else 'Edit post' }}</h1>
+    <p class="muted">Share a paper, AI news or an update with the lab community. Formatting uses <a href="https://commonmark.org/help/" target="_blank" rel="noopener">Markdown</a>.</p>
+  </div>
+  <form method="post" class="form editor-form" id="editor">
+    {% include "partials/csrf.html" %}
+    <div class="field">
+      <label>Category</label>
+      <div class="segmented">
+        {% for key, label in CATEGORIES.items() %}
+        <label class="seg"><input type="radio" name="category" value="{{ key }}" {{ 'checked' if (post.category or 'news')==key }}><span>{{ label }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="field">
+      <label for="title">Title</label>
+      <input id="title" name="title" value="{{ request.form.title or post.title or '' }}" required maxlength="200" placeholder="A clear, specific title" class="input-lg">
+    </div>
+    <div class="field">
+      <label for="summary">Short summary <span class="muted">(optional, shown on cards)</span></label>
+      <input id="summary" name="summary" value="{{ request.form.summary or post.summary or '' }}" maxlength="400" placeholder="One or two sentences on why this matters">
+    </div>
+    <div class="row-2 paper-fields">
+      <div class="field">
+        <label for="link">Paper / source link <span class="muted">(arXiv, DOI, article)</span></label>
+        <input id="link" name="link" type="url" value="{{ request.form.link or post.link or '' }}" placeholder="https://arxiv.org/abs/…">
+      </div>
+      <div class="field" data-show-for="paper">
+        <label for="authors_line">Paper authors</label>
+        <input id="authors_line" name="authors_line" value="{{ request.form.authors_line or post.authors_line or '' }}" placeholder="e.g. Smith, Lee, Patel (2025)">
+      </div>
+    </div>
+    <div class="field">
+      <div class="tabs">
+        <button type="button" class="tab active" data-tab="write">Write</button>
+        <button type="button" class="tab" data-tab="preview" data-preview-url="{{ url_for('preview') }}">Preview</button>
+        <span class="muted small tab-hint"><span id="wordcount">0</span> words</span>
+      </div>
+      <textarea id="body" name="body" rows="16" required placeholder="## Key idea&#10;&#10;Explain the paper or news in your own words…">{{ request.form.body or post.body or '' }}</textarea>
+      <div id="preview" class="prose preview" hidden></div>
+    </div>
+    <div class="field">
+      <label for="tags">Tags <span class="muted">(comma separated)</span></label>
+      <input id="tags" name="tags" value="{{ request.form.tags or post.tags or '' }}" placeholder="llms, computer vision, reinforcement learning">
+    </div>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="{{ url_for('post_detail', slug=post.slug) if post.slug else url_for('index') }}">Cancel</a>
+      <button class="btn btn-primary">{{ 'Publish post' if is_new else 'Save changes' }}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

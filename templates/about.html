@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}About · {{ site_name }}{% endblock %}
+{% block content %}
+<section class="hero hero-sm"><div class="container"><span class="eyebrow">About</span><h1>{{ site_name }}</h1><p class="lead">{{ tagline }}</p></div></section>
+<div class="container narrow prose about">
+  <p>The {{ site_name }} at the University of California, Irvine brings together students, researchers and faculty working on artificial intelligence. This blog is our shared notebook: a place to post papers we've written or loved, keep up with news from across the field, and celebrate what's happening in the lab.</p>
+  <h2>How to contribute</h2>
+  <ol>
+    <li><a href="{{ url_for('signup') }}">Create an account</a>.</li>
+    <li>Click <strong>Write</strong> and pick a category: Paper, AI News, Lab Update, Event or Tutorial.</li>
+    <li>Add a link to the source and a few sentences in your own words.</li>
+  </ol>
+  <h2>Community guidelines</h2>
+  <ul>
+    <li>Be accurate, and link to primary sources.</li>
+    <li>Credit authors when you summarise their work.</li>
+    <li>Be respectful in comments. Editors may hide posts or comments that break these rules.</li>
+  </ul>
+  {% if staff %}
+  <h2>Editors &amp; admins</h2>
+  <div class="staff">
+    {% for u in staff %}<a class="staff-card" href="{{ url_for('profile', uid=u.id) }}"><span class="avatar" style="--h: {{ u.avatar_hue }}">{{ u.initials }}</span><span><strong>{{ u.name }}</strong><small>{{ u.affiliation or u.role|title }}</small></span></a>{% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
