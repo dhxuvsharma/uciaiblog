@@ -398,3 +398,12 @@ textarea { resize: vertical; line-height: 1.6; }
 .chip:hover { box-shadow: 0 0 0 3px rgba(0,100,164,.08), 0 6px 18px -8px rgba(0,100,164,.45); transform: translateY(-1px); }
 .chip.active { box-shadow: 0 6px 18px -8px rgba(11,35,64,.6); }
 .chip.active::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px 2px rgba(255,210,0,.7); }
+
+/* Anteater logo: neurons light up nose-to-tail on hover */
+.anteater-logo { display: block; transition: transform .25s ease, filter .25s ease; }
+.anteater-logo .al-node { transition: fill .35s ease calc((1s - var(--d)) * .5); }
+.anteater-logo .al-edges { transition: stroke .3s ease; }
+.brand:hover .anteater-logo { transform: rotate(-4deg) scale(1.06); filter: drop-shadow(0 4px 10px rgba(0,100,164,.45)); }
+.brand:hover .anteater-logo .al-node { fill: #FFD200; }
+.brand:hover .anteater-logo .al-edges { stroke: #FFE680; }
+@media (prefers-reduced-motion: reduce) { .anteater-logo, .anteater-logo * { transition: none !important; } }
