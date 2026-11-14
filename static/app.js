@@ -224,3 +224,177 @@
   build();
   if (!reduce) requestAnimationFrame(t => { last = t; draw(t); });
 })();
+
+// Category banners: a different gentle, mouse-reactive scene for each category.
+(function () {
+  const hero = document.getElementById('cat-hero');
+  const canvas = hero && hero.querySelector('.cat-canvas');
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  const mode = hero.dataset.mode;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const GOLD = '255,210,0', WHITE = '255,255,255';
+  let W = 0, H = 0, mouse = null, sm = null, last = 0, visible = true, S = {};
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const near = (x, y, R) => sm ? Math.max(0, 1 - Math.hypot(x - sm.x, y - sm.y) / R) : 0;
+  const glowDot = (x, y, r, color, a) => {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(${color},${a})`); g.addColorStop(1, `rgba(${color},0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.29); ctx.fill();
+  };
+  const leftFade = x => Math.min(1, Math.max(0.25, (x / W - 0.2) / 0.4)); // keep text side calm
+
+  const scenes = {
+    // Papers: drifting "documents" linked into a citation web
+    paper: {
+      init() {
+        const n = Math.round(Math.min(46, W / 28));
+        S.docs = Array.from({ length: n }, () => ({ x: rnd(0, W), y: rnd(0, H), vx: rnd(-.12, .12), vy: rnd(-.08, .08), s: rnd(.8, 1.3), rot: rnd(-.3, .3), g: 0 }));
+      },
+      draw(dt) {
+        const D = S.docs, link = Math.min(170, W / 6);
+        D.forEach(d => { d.x += d.vx * dt * 60; d.y += d.vy * dt * 60;
+          if (d.x < -20) d.x = W + 20; if (d.x > W + 20) d.x = -20; if (d.y < -20) d.y = H + 20; if (d.y > H + 20) d.y = -20;
+          d.g += (near(d.x, d.y, 200) - d.g) * .1; });
+        for (let i = 0; i < D.length; i++) for (let j = i + 1; j < D.length; j++) {
+          const a = D[i], b = D[j], dist = Math.hypot(a.x - b.x, a.y - b.y);
+          if (dist > link) continue;
+          const g = Math.max(a.g, b.g), f = (1 - dist / link) * leftFade((a.x + b.x) / 2);
+          ctx.strokeStyle = g > .1 ? `rgba(${GOLD},${f * (.15 + g * .7)})` : `rgba(${WHITE},${f * .16})`;
+          ctx.lineWidth = .6 + g * 1.2; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+        D.forEach(d => {
+          const f = leftFade(d.x);
+          if (d.g > .05) glowDot(d.x, d.y, 26 * d.s, GOLD, .35 * d.g);
+          ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(d.rot); ctx.scale(d.s, d.s);
+          ctx.fillStyle = d.g > .1 ? `rgba(${GOLD},${.6 + d.g * .4})` : `rgba(${WHITE},${.55 * f})`;
+          ctx.fillRect(-5, -7, 10, 14);
+          ctx.fillStyle = 'rgba(11,35,64,.55)'; for (let k = 0; k < 3; k++) ctx.fillRect(-3, -4 + k * 3.2, 6 - (k === 2 ? 2 : 0), 1);
+          ctx.restore();
+        });
+      }
+    },
+    // AI News: broadcast ripples; waves rise toward the cursor
+    news: {
+      init() { S.rings = []; S.t = 0; S.src = [{ x: W * .68, y: H * .55 }, { x: W * .95, y: H * .15 }]; },
+      draw(dt, time) {
+        S.t += dt;
+        if (S.t > .9) { S.t = 0; S.src.forEach(s => S.rings.push({ x: s.x, y: s.y, r: 4 })); }
+        if (sm && Math.random() < dt * 2) S.rings.push({ x: sm.x, y: sm.y, r: 2, gold: true });
+        S.rings = S.rings.filter(r => (r.r += dt * 55) < Math.max(W, H) * .6);
+        S.rings.forEach(r => {
+          const a = Math.max(0, 1 - r.r / (Math.max(W, H) * .6));
+          ctx.strokeStyle = `rgba(${r.gold ? GOLD : WHITE},${a * (r.gold ? .55 : .28)})`; ctx.lineWidth = r.gold ? 1.6 : 1.1;
+          ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, 6.29); ctx.stroke();
+        });
+        // flowing data lines
+        for (let k = 0; k < 5; k++) {
+          ctx.beginPath();
+          for (let x = 0; x <= W; x += 8) {
+            const g = near(x, H * (.2 + k * .15), 220);
+            const y = H * (.2 + k * .15) + Math.sin(x / 70 + time / 900 + k) * (6 + g * 22);
+            x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          }
+          ctx.strokeStyle = `rgba(${WHITE},${.07 + k * .015})`; ctx.lineWidth = 1; ctx.stroke();
+        }
+        S.src.forEach(s => glowDot(s.x, s.y, 18, GOLD, .5));
+      }
+    },
+    // Lab Updates: a twinkling constellation that reaches toward the cursor
+    update: {
+      init() {
+        const n = Math.round(Math.min(110, W / 11));
+        S.stars = Array.from({ length: n }, () => ({ x: rnd(0, W), y: rnd(0, H), r: rnd(.5, 1.8), p: rnd(0, 6.28), vx: rnd(-.05, .05), vy: rnd(-.04, .04) }));
+      },
+      draw(dt, time) {
+        S.stars.forEach(s => {
+          s.x = (s.x + s.vx * dt * 60 + W) % W; s.y = (s.y + s.vy * dt * 60 + H) % H;
+          const tw = .45 + .55 * Math.sin(time / 700 + s.p), g = near(s.x, s.y, 190);
+          if (g > 0) {
+            ctx.strokeStyle = `rgba(${GOLD},${g * .55})`; ctx.lineWidth = .8;
+            ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(sm.x, sm.y); ctx.stroke();
+          }
+          if (g > .2) glowDot(s.x, s.y, 10, GOLD, g * .6);
+          ctx.fillStyle = g > .2 ? `rgba(${GOLD},1)` : `rgba(${WHITE},${tw * .8 * leftFade(s.x)})`;
+          ctx.beginPath(); ctx.arc(s.x, s.y, s.r + g * 1.2, 0, 6.29); ctx.fill();
+        });
+        if (sm) glowDot(sm.x, sm.y, 30, GOLD, .25);
+      }
+    },
+    // Events: particles orbiting like a calendar of dates; orbits lean toward the cursor
+    event: {
+      init() {
+        S.cx = W * .68; S.cy = H * .5;
+        S.orbits = [40, 72, 104, 136, 168].map((r, i) => ({ r, tilt: .45, items: Array.from({ length: 3 + i * 2 }, (_, k) => ({ a: k / (3 + i * 2) * 6.28 + rnd(0, .4), sp: (.35 - i * .05) * (i % 2 ? -1 : 1) })) }));
+      },
+      draw(dt) {
+        const tx = sm ? S.cx + (sm.x - S.cx) * .08 : W * .68, ty = sm ? S.cy + (sm.y - S.cy) * .08 : H * .5;
+        S.cx += (tx - S.cx) * .05; S.cy += (ty - S.cy) * .05;
+        glowDot(S.cx, S.cy, 46, GOLD, .45);
+        ctx.fillStyle = `rgba(${GOLD},.95)`; ctx.beginPath(); ctx.arc(S.cx, S.cy, 6, 0, 6.29); ctx.fill();
+        S.orbits.forEach(o => {
+          ctx.strokeStyle = `rgba(${WHITE},.12)`; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.ellipse(S.cx, S.cy, o.r, o.r * o.tilt, -.25, 0, 6.29); ctx.stroke();
+          o.items.forEach(it => {
+            it.a += it.sp * dt;
+            const c = Math.cos(-.25), s = Math.sin(-.25), ex = Math.cos(it.a) * o.r, ey = Math.sin(it.a) * o.r * o.tilt;
+            const x = S.cx + ex * c - ey * s, y = S.cy + ex * s + ey * c, g = near(x, y, 120);
+            if (g > .1) glowDot(x, y, 14, GOLD, g * .7);
+            ctx.fillStyle = g > .1 ? `rgba(${GOLD},1)` : `rgba(${WHITE},${.5 + .4 * Math.sin(it.a)})`;
+            ctx.beginPath(); ctx.arc(x, y, 2.2 + g * 1.5, 0, 6.29); ctx.fill();
+          });
+        });
+      }
+    },
+    // Tutorials: a loss landscape; particles do gradient descent toward a minimum that follows the cursor
+    tutorial: {
+      init() {
+        S.min = { x: W * .68, y: H * .5 };
+        S.ps = Array.from({ length: 60 }, () => ({ x: rnd(W * .4, W), y: rnd(0, H), trail: [] }));
+      },
+      draw(dt) {
+        const target = sm || { x: W * .68, y: H * .5 };
+        S.min.x += (target.x - S.min.x) * .04; S.min.y += (target.y - S.min.y) * .04;
+        for (let k = 1; k <= 9; k++) {
+          ctx.strokeStyle = `rgba(${WHITE},${.16 - k * .013})`; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.ellipse(S.min.x, S.min.y, k * 34, k * 21, .2, 0, 6.29); ctx.stroke();
+        }
+        glowDot(S.min.x, S.min.y, 34, GOLD, .5);
+        S.ps.forEach(p => {
+          const dx = S.min.x - p.x, dy = S.min.y - p.y, d = Math.hypot(dx, dy);
+          const step = Math.min(d, (18 + d * .9) * dt);
+          p.x += dx / (d || 1) * step + Math.sin(p.y / 30) * .25; p.y += dy / (d || 1) * step * 1.4;
+          p.trail.push([p.x, p.y]); if (p.trail.length > 14) p.trail.shift();
+          if (d < 10) { p.x = rnd(0, W); p.y = Math.random() < .5 ? -10 : H + 10; p.trail = []; }
+          const g = near(p.x, p.y, 160);
+          ctx.strokeStyle = `rgba(${g > .1 ? GOLD : WHITE},${(.25 + g * .4) * leftFade(p.x)})`; ctx.lineWidth = 1;
+          ctx.beginPath(); p.trail.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+          ctx.fillStyle = g > .1 ? `rgba(${GOLD},1)` : `rgba(${WHITE},${.75 * leftFade(p.x)})`;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 1.8 + g, 0, 6.29); ctx.fill();
+        });
+      }
+    }
+  };
+  const scene = scenes[mode];
+  if (!scene) return;
+
+  function size() {
+    const r = hero.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); S = {}; scene.init();
+  }
+  function frame(time) {
+    const dt = Math.min(.05, (time - last) / 1000 || 0); last = time;
+    if (mouse) sm = sm ? { x: sm.x + (mouse.x - sm.x) * .2, y: sm.y + (mouse.y - sm.y) * .2 } : { ...mouse }; else sm = null;
+    ctx.clearRect(0, 0, W, H); scene.draw(reduce ? 0 : dt, reduce ? 0 : time);
+    if (!reduce && visible) requestAnimationFrame(frame);
+  }
+  hero.addEventListener('pointermove', e => { const r = hero.getBoundingClientRect(); mouse = { x: e.clientX - r.left, y: e.clientY - r.top }; if (reduce) frame(0); });
+  hero.addEventListener('pointerleave', () => { mouse = null; if (reduce) frame(0); });
+  if ('IntersectionObserver' in window) new IntersectionObserver(([en]) => {
+    const was = visible; visible = en.isIntersecting;
+    if (visible && !was && !reduce) requestAnimationFrame(t => { last = t; frame(t); });
+  }).observe(hero);
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(size, 150); });
+  size(); requestAnimationFrame(t => { last = t; frame(t); });
+})();

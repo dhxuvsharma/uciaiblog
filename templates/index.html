@@ -25,6 +25,26 @@
     </div>
   </div>
 </section>
+{% elif cat and not q and not tag %}
+{% set CAT_INFO = {
+  'paper': ('Research papers', 'Papers our community is writing, reading and discussing. Move your mouse to light up the citation web.', 'Share a paper'),
+  'news': ('AI News', 'Releases, results and announcements from across the field, as they ripple out.', 'Share news'),
+  'update': ('Lab Updates', 'Talks, milestones and new faces. The constellation of people that makes up the lab.', 'Post an update'),
+  'event': ('Events', 'Reading groups, seminars and workshops. Everything orbiting the lab calendar.', 'Add an event'),
+  'tutorial': ('Tutorials', 'How-tos and explainers. Hover to move the minimum and watch the particles descend.', 'Write a tutorial'),
+} %}
+{% set info = CAT_INFO[cat] %}
+<section class="hero hero-cat hero-cat-{{ cat }}" id="cat-hero" data-mode="{{ cat }}">
+  <canvas class="cat-canvas" aria-hidden="true"></canvas>
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <span class="eyebrow">{{ CATEGORIES[cat] }} &middot; {{ pagination.total }} post{{ '' if pagination.total == 1 else 's' }}</span>
+      <h1>{{ info[0] }}</h1>
+      <p class="lead">{{ info[1] }}</p>
+    </div>
+    <a class="btn btn-gold" href="{{ url_for('new_post', c=cat) }}">{{ info[2] }}</a>
+  </div>
+</section>
 {% endif %}
 
 <div class="container" id="latest">
