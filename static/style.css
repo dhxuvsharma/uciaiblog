@@ -91,7 +91,9 @@ main { min-height: 60vh; padding-bottom: 4rem; }
 
 /* Hero */
 .hero { background: radial-gradient(1200px 400px at 85% -10%, rgba(255,210,0,.22), transparent 60%), linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%); color: #fff; padding: 4.5rem 0 4rem; margin-bottom: 2.5rem; position: relative; overflow: hidden; }
-.hero::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.12) 1px, transparent 1px); background-size: 22px 22px; mask-image: linear-gradient(90deg, transparent 40%, #000); pointer-events: none; }
+.hero::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.07) 1px, transparent 1px); background-size: 22px 22px; mask-image: linear-gradient(90deg, transparent 40%, #000); pointer-events: none; }
+.hero-net { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.hero-sm .hero-net { display: none; }
 .hero-inner { display: flex; align-items: flex-end; justify-content: space-between; gap: 3rem; position: relative; z-index: 1; }
 .hero h1 { color: #fff; font-size: clamp(2rem, 4.2vw, 3.2rem); max-width: 680px; margin-bottom: .8rem; }
 .hero .hl { color: var(--gold); }
@@ -375,3 +377,4 @@ textarea { resize: vertical; line-height: 1.6; }
   .featured { padding: 1.35rem; }
   .featured h2 { font-size: 1.45rem; }
 }
+@media (max-width: 760px) { .hero-net { opacity: .45; } }

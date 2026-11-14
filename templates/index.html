@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 {% if not (cat or q or tag) %}
-<section class="hero">
+<section class="hero" id="hero">
+  <canvas class="hero-net" aria-hidden="true"></canvas>
   <div class="container hero-inner">
     <div class="hero-copy">
       <span class="eyebrow">University of California, Irvine</span>
